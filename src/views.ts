@@ -152,6 +152,38 @@ Get Started — Sign In
 <div class="feature"><div class="icon">🔔</div><h3>Instant Alerts</h3><p>Get notified via Slack or Discord when your service goes down. Never miss an outage.</p></div>
 <div class="feature"><div class="icon">📊</div><h3>Status Pages</h3><p>Every monitor gets a public status page with 30-day uptime history. Share it with your users.</p></div>
 <div class="feature"><div class="icon">🐙</div><h3>GitHub Ready</h3><p>Add live badges to any README. GitHub Actions integration included.</p></div>
+</div>
+<div class="container" style="padding-bottom:60px">
+<div class="card" style="max-width:720px;margin:0 auto">
+<h2 style="font-size:20px;margin-bottom:16px">Setting Up Slack & Discord Alerts</h2>
+<p style="color:#8b949e;font-size:14px;margin-bottom:20px;line-height:1.6">Get notified when your service goes down. Here's how to get a webhook URL for Slack or Discord.</p>
+
+<div style="margin-bottom:24px">
+<h3 style="font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">💬</span> Discord</h3>
+<ol style="color:#c9d1d9;font-size:14px;line-height:1.8;padding-left:20px">
+<li>Open your Discord server → <strong>Server Settings</strong> → <strong>Integrations</strong></li>
+<li>Click <strong>Create Webhook</strong> (or select an existing one)</li>
+<li>Give it a name (e.g. "LiveStatus Alerts") and select the channel</li>
+<li>Click <strong>Copy Webhook URL</strong></li>
+<li>Paste the URL into LiveStatus when creating or editing a monitor</li>
+</ol>
+</div>
+
+<div style="margin-bottom:24px">
+<h3 style="font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">⚡</span> Slack</h3>
+<ol style="color:#c9d1d9;font-size:14px;line-height:1.8;padding-left:20px">
+<li>Go to <a href="https://api.slack.com/apps" style="color:#58a6ff">api.slack.com/apps</a> → <strong>Create New App</strong> → <strong>From scratch</strong></li>
+<li>Name it "LiveStatus" and choose your workspace</li>
+<li>Navigate to <strong>Incoming Webhooks</strong> → toggle <strong>Activate Incoming Webhooks</strong> ON</li>
+<li>Click <strong>Add New Webhook to Workspace</strong> and select the channel</li>
+<li>Copy the webhook URL and paste it into LiveStatus</li>
+</ol>
+</div>
+
+<div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:16px">
+<p style="color:#8b949e;font-size:13px;margin:0"><span style="color:#f0f6fc;font-weight:600">💡 Tip:</span> Add the webhook URL in the "Webhook URL" field when creating a monitor. You can also update it later from the dashboard. Use the "Test" button to verify your webhook works.</p>
+</div>
+</div>
 </div>`;
     return this.layout('Uptime Monitoring with README Badges', content, null);
   },
