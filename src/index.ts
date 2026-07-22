@@ -29,6 +29,9 @@ function seedDemoMonitors(): void {
     { name: 'Google', url: 'https://www.google.com' },
     { name: 'GitHub', url: 'https://www.github.com' },
     { name: 'npm', url: 'https://www.npmjs.com' },
+    { name: 'Auto-Company Site', url: 'https://company-site-production-9f58.up.railway.app' },
+    { name: 'ReqDump', url: 'https://reqdump-production.up.railway.app' },
+    { name: 'SnapOG', url: 'https://snapog-production.up.railway.app' },
   ];
   for (const demo of demos) {
     const created = d.createMonitor(adminUser.id, demo.name, demo.url);
