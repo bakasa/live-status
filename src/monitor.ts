@@ -8,7 +8,7 @@ export async function runHealthChecks(): Promise<void> {
   await Promise.allSettled(monitors.map(m => checkSingleMonitor(m)));
 }
 
-async function checkSingleMonitor(monitor: Monitor): Promise<void> {
+export async function checkSingleMonitor(monitor: Monitor): Promise<void> {
   const d = db();
   const startTime = Date.now();
   let statusCode: number | null = null;

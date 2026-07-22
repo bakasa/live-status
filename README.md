@@ -20,7 +20,9 @@ Monitor your APIs, websites, and services. Get a dynamic SVG badge that shows li
 
 ## Quick Deploy
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/unknown?referralCode=)
+Deploy to Railway in one click:
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/bakasa/live-status)
 
 Or deploy manually:
 
@@ -84,6 +86,21 @@ Each monitor generates a badge embed code. Paste it in your `README.md`:
 
 This renders a live SVG badge showing your service status and 24h uptime.
 
+### GitHub Actions: Deploy Notifier
+
+Get your badge to update instantly after deployment. Add this step after your deploy job:
+
+```yaml
+- name: Notify LiveStatus
+  uses: bakasa/live-status-action@v1
+  with:
+    api-key: ${{ secrets.LIVESTATUS_API_KEY }}
+    monitor-id: "1"
+```
+
+The action triggers an immediate health check and outputs the badge markdown.
+See [github.com/bakasa/live-status-action](https://github.com/bakasa/live-status-action) for full docs.
+
 ### GitHub Actions: Auto-Register on Deploy
 
 Want to automatically create/update a monitor when you deploy? Add this workflow (`.github/workflows/livestatus.yml`):
@@ -122,6 +139,7 @@ All API endpoints require authentication via Bearer token or session cookie.
 | `DELETE` | `/api/monitors/:id` | Delete monitor |
 | `PATCH` | `/api/monitors/:id` | Update monitor webhook |
 | `POST` | `/api/monitors/:id/test-webhook` | Send test webhook notification |
+| `POST` | `/api/monitors/:id/check` | Trigger immediate health check |
 | `POST` | `/api/reseed` | Reset demo monitors |
 | `GET` | `/badge/:id` | SVG badge (public) |
 | `GET` | `/status/:id` | Status page (public) |

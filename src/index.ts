@@ -4,7 +4,7 @@ import { serve } from '@hono/node-server';
 import { db, getDb, migrate as runMigrations } from './db.js';
 import * as auth from './auth.js';
 import { generateBadge } from './badge.js';
-import { runHealthChecks, sendWebhookAlert } from './monitor.js';
+import { runHealthChecks, checkSingleMonitor, sendWebhookAlert } from './monitor.js';
 import { views } from './views.js';
 import { User } from './db.js';
 
@@ -160,6 +160,19 @@ app.patch('/api/monitors/:id', requireAuth, async (c) => {
     return c.json(m);
   }
   return c.json({ error: 'Nothing to update' }, 400);
+});
+
+app.post('/api/monitors/:id/check', requireAuth, async (c) => {
+  const user = c.var.user;
+  const id = parseInt(c.req.param('id') || '');
+  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const monitor = d.getMonitorByIdAndUser(id, user.id);
+  if (!monitor) return c.json({ error: 'Not found' }, 404);
+
+  const startTime = Date.now();
+  await checkSingleMonitor(monitor);
+  const updated = d.getMonitorById(id);
+  return c.json({ ok: true, status: updated?.last_status, elapsed_ms: Date.now() - startTime });
 });
 
 app.post('/api/monitors/:id/test-webhook', requireAuth, async (c) => {
