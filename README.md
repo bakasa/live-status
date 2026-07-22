@@ -4,9 +4,9 @@
 
 Monitor your APIs, websites, and services. Get a dynamic SVG badge that shows live uptime status. Embed it in your README, dashboard, or any web page.
 
-[![Auto-Company Site](https://livestatus-production.up.railway.app/badge/2)](https://livestatus-production.up.railway.app/status/2)
-[![ReqDump](https://livestatus-production.up.railway.app/badge/3)](https://livestatus-production.up.railway.app/status/3)
-[![SnapOG](https://livestatus-production.up.railway.app/badge/4)](https://livestatus-production.up.railway.app/status/4)
+[![Auto-Company Site](https://livestatus-production.up.railway.app/badge/4)](https://livestatus-production.up.railway.app/status/4)
+[![ReqDump](https://livestatus-production.up.railway.app/badge/5)](https://livestatus-production.up.railway.app/status/5)
+[![SnapOG](https://livestatus-production.up.railway.app/badge/6)](https://livestatus-production.up.railway.app/status/6)
 
 ---
 
