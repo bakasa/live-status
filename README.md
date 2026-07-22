@@ -1,0 +1,132 @@
+# LiveStatus
+
+**Uptime monitoring with live SVG badges for your GitHub READMEs.**
+
+Monitor your APIs, websites, and services. Get a dynamic SVG badge that shows live uptime status. Embed it in your README, dashboard, or any web page.
+
+[![Auto-Company Site](https://livestatus-production.up.railway.app/badge/2)](https://livestatus-production.up.railway.app/status/2)
+[![ReqDump](https://livestatus-production.up.railway.app/badge/3)](https://livestatus-production.up.railway.app/status/3)
+[![SnapOG](https://livestatus-production.up.railway.app/badge/4)](https://livestatus-production.up.railway.app/status/4)
+
+---
+
+## Features
+
+- **Live SVG Badges** — Add a dynamic badge to any README or website. Updates every 5 minutes.
+- **Public Status Pages** — Every monitor gets a public status page with 24h and 30d uptime history.
+- **Instant Alerts** — Get notified via Slack or Discord webhook when your service goes down.
+- **Self-Hosted** — Deploy on Railway in 2 minutes. Your data, your infrastructure.
+- **No Signup Required for Visitors** — Status pages and badges are public by default.
+
+## Quick Deploy
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/unknown?referralCode=)
+
+Or deploy manually:
+
+```bash
+# Clone and install
+git clone https://github.com/bakasa/live-status.git
+cd live-status
+npm install
+
+# Set environment variables
+export ADMIN_API_KEY=$(openssl rand -hex 16)
+export JWT_SECRET=$(openssl rand -hex 32)
+export APP_URL=http://localhost:3000
+
+# Run
+npm run start:dev
+```
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `ADMIN_API_KEY` | API key for dashboard login | Yes |
+| `JWT_SECRET` | Secret for signing session tokens | Yes |
+| `APP_URL` | Public URL of your instance | Yes |
+| `DATA_DIR` | Directory for SQLite database (default: `./data`) | No |
+
+## Usage
+
+### 1. Sign In
+
+Open your instance URL, click **Sign In**, and enter your `ADMIN_API_KEY`.
+
+### 2. Create a Monitor
+
+Add the name and URL of the service you want to monitor. Optionally configure a Slack/Discord webhook for alerts.
+
+### 3. Add the Badge to Your README
+
+Each monitor generates a badge embed code:
+
+```markdown
+[![LiveStatus](https://your-instance/badge/1)](https://your-instance/status/1)
+```
+
+This renders as: ![Example Badge](https://livestatus-production.up.railway.app/badge/2)
+
+### 4. Share Your Status Page
+
+Each monitor has a public status page at `/status/:id`. Share it with your users.
+
+## API
+
+All API endpoints require authentication via Bearer token or session cookie.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/login` | Sign in with API key |
+| `GET` | `/api/monitors` | List monitors |
+| `POST` | `/api/monitors` | Create monitor (`name`, `url`, `webhook?`) |
+| `DELETE` | `/api/monitors/:id` | Delete monitor |
+| `PATCH` | `/api/monitors/:id` | Update monitor webhook |
+| `POST` | `/api/reseed` | Reset demo monitors |
+| `GET` | `/badge/:id` | SVG badge (public) |
+| `GET` | `/status/:id` | Status page (public) |
+| `GET` | `/gallery` | Public gallery of all monitors |
+
+## Tech Stack
+
+- **Runtime**: Node.js 20 (Hono + @hono/node-server)
+- **Database**: SQLite (better-sqlite3)
+- **Auth**: API key + JWT session cookies
+- **Badges**: Server-side rendered SVG
+- **Deploy**: Railway, any Node.js host
+
+## Deployment
+
+### Railway
+
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Deploy
+railway login
+railway init
+railway up
+
+# Set variables
+railway variables set ADMIN_API_KEY=your-key JWT_SECRET=your-secret APP_URL=https://your-instance.up.railway.app
+
+# Add domain
+railway domain
+```
+
+### Docker
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
+```
+
+## License
+
+MIT

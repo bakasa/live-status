@@ -15,6 +15,36 @@ if (!d.getUserByUsername('admin')) {
   d.upsertUser('admin');
 }
 
+function seedDemoMonitors(): void {
+  const allMonitors = d.getAllMonitors();
+  if (allMonitors.length > 0) return;
+
+  const adminUser = d.getUserByUsername('admin')!;
+  if (!adminUser) {
+    console.warn('No admin user found, skipping seed');
+    return;
+  }
+
+  const demos = [
+    { name: 'Google', url: 'https://www.google.com' },
+    { name: 'GitHub', url: 'https://www.github.com' },
+    { name: 'npm', url: 'https://www.npmjs.com' },
+  ];
+  for (const demo of demos) {
+    const created = d.createMonitor(adminUser.id, demo.name, demo.url);
+    d.updateMonitorStatus(created.id, 'online');
+    d.updateMonitorUptime(created.id, 100.0, 99.98);
+    for (let i = 0; i < 24; i++) {
+      const isOnline = (demo.name === 'npm' && i === 3) ? 0 : 1;
+      const checkedAt = new Date(Date.now() - (23 - i) * 3600 * 1000);
+      d.saveHealthCheckRaw(created.id, isOnline === 1 ? 200 : 500, isOnline === 1 ? 120 + Math.random() * 300 : null, isOnline, checkedAt);
+    }
+  }
+  console.log('Seeded 3 demo monitors');
+}
+
+seedDemoMonitors();
+
 type Variables = { user: User };
 
 const app = new Hono<{ Variables: Variables }>();
@@ -95,6 +125,16 @@ app.get('/api/monitors', requireAuth, async (c) => {
   const user = c.var.user;
   const monitors = d.getMonitorsByUser(user.id);
   return c.json(monitors);
+});
+
+app.post('/api/reseed', requireAuth, async (c) => {
+  const user = c.var.user;
+  const existing = d.getMonitorsByUser(user.id);
+  for (const m of existing) {
+    d.deleteMonitor(m.id, user.id);
+  }
+  seedDemoMonitors();
+  return c.json({ ok: true, message: 'Re-seeded demo monitors' });
 });
 
 app.delete('/api/monitors/:id', requireAuth, async (c) => {

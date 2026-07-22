@@ -148,6 +148,10 @@ export function db() {
     d.prepare('INSERT INTO health_checks (monitor_id, status_code, response_time_ms, is_online) VALUES (?, ?, ?, ?)').run(monitorId, statusCode, responseTimeMs, isOnline);
   }
 
+  function saveHealthCheckRaw(monitorId: number, statusCode: number | null, responseTimeMs: number | null, isOnline: number, checkedAt: Date): void {
+    d.prepare('INSERT INTO health_checks (monitor_id, status_code, response_time_ms, is_online, checked_at) VALUES (?, ?, ?, ?, ?)').run(monitorId, statusCode, responseTimeMs, isOnline, checkedAt.toISOString());
+  }
+
   function getRecentHealthChecks(monitorId: number, hours: number): HealthCheck[] {
     return d.prepare("SELECT * FROM health_checks WHERE monitor_id = ? AND checked_at > datetime('now', '-' || ? || ' hours') ORDER BY checked_at ASC").all(monitorId, hours) as HealthCheck[];
   }
@@ -183,7 +187,7 @@ export function db() {
     upsertUser, getUserByUsername, getUserById,
     createMonitor, getMonitorsByUser, getMonitorById, getMonitorByIdAndUser,
     deleteMonitor, updateMonitorWebhook,
-    getAllMonitors, recordHealthCheck, getRecentHealthChecks,
+    getAllMonitors, recordHealthCheck, saveHealthCheckRaw, getRecentHealthChecks,
     updateMonitorStatus, calculateUptime, updateMonitorUptime,
     recordBadgeImpression, getBadgeImpressionCount,
     getAllMonitorsWithUsers,
