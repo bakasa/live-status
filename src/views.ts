@@ -104,8 +104,9 @@ export const views = {
 <header>
 <div class="container">
 <a href="/" style="text-decoration:none"><h1>Live<span>Status</span></h1></a>
-<nav>
+    <nav>
 <a href="/gallery">Gallery</a>
+<a href="https://github.com/bakasa/live-status/issues" target="_blank" rel="noopener">Issues</a>
 ${user ? `<a href="/dashboard">Dashboard</a><a href="/auth/logout">Logout</a><span style="font-size:13px;font-weight:600;color:#8b949e">${user.username}</span>` : '<a href="/login">Sign in</a>'}
 </nav>
 </div>
@@ -113,7 +114,7 @@ ${user ? `<a href="/dashboard">Dashboard</a><a href="/auth/logout">Logout</a><sp
 ${content}
 <footer>
 <div class="container">
-LiveStatus — Open source uptime monitoring · <a href="/gallery">Gallery</a> · <a href="/">Home</a>
+LiveStatus — Open source uptime monitoring · <a href="/gallery">Gallery</a> · <a href="/">Home</a> · <a href="https://github.com/bakasa/live-status" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/bakasa/live-status/issues" target="_blank" rel="noopener">Issues</a> · <a href="https://github.com/sponsors/bakasa" target="_blank" rel="noopener" style="color:#36D399;font-weight:600">♥ Sponsor</a>
 </div>
 </footer>
 </body>
@@ -154,6 +155,10 @@ Get Started — Sign In
 <div class="feature"><div class="icon">🐙</div><h3>GitHub Ready</h3><p>Add live badges to any README. GitHub Actions integration included.</p></div>
 </div>
 <div class="container" style="padding-bottom:60px">
+<div style="text-align:center;margin-bottom:40px">
+<p style="color:#8b949e;font-size:15px;margin-bottom:12px">LiveStatus is free and open source. If you find it useful, consider sponsoring.</p>
+<a href="https://github.com/sponsors/bakasa" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:14px;padding:10px 24px">♥ Sponsor on GitHub</a>
+</div>
 <div class="card" style="max-width:720px;margin:0 auto">
 <h2 style="font-size:20px;margin-bottom:16px">Setting Up Slack & Discord Alerts</h2>
 <p style="color:#8b949e;font-size:14px;margin-bottom:20px;line-height:1.6">Get notified when your service goes down. Here's how to get a webhook URL for Slack or Discord.</p>
