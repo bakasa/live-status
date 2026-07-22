@@ -1,0 +1,20 @@
+{
+  "name": "livestatus",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply livestatus-db --local",
+    "migrate:prod": "wrangler d1 migrations apply livestatus-db --remote"
+  },
+  "dependencies": {
+    "hono": "^4.5.0",
+    "jose": "^5.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240601.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.60.0"
+  }
+}

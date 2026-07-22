@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "livestatus",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "livestatus-db",
+      "database_id": "PASTE_YOUR_DATABASE_ID_HERE"
+    }
+  ],
+  "vars": {
+    "APP_URL": "https://PASTE_YOUR_WORKER_URL.workers.dev"
+  },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  }
+}
