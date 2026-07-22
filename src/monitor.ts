@@ -1,19 +1,15 @@
-import { db, Monitor } from './db';
+import { db, Monitor } from './db.js';
 
-interface Env {
-  DB: D1Database;
-}
-
-export async function runHealthChecks(env: Env): Promise<void> {
-  const d = db(env.DB);
-  const monitors = await d.getAllMonitors();
+export async function runHealthChecks(): Promise<void> {
+  const d = db();
+  const monitors = d.getAllMonitors();
   if (monitors.length === 0) return;
 
-  await Promise.allSettled(monitors.map(m => checkSingleMonitor(m, env)));
+  await Promise.allSettled(monitors.map(m => checkSingleMonitor(m)));
 }
 
-async function checkSingleMonitor(monitor: Monitor, env: Env): Promise<void> {
-  const d = db(env.DB);
+async function checkSingleMonitor(monitor: Monitor): Promise<void> {
+  const d = db();
   const startTime = Date.now();
   let statusCode: number | null = null;
   let isOnline = 0;
@@ -34,7 +30,7 @@ async function checkSingleMonitor(monitor: Monitor, env: Env): Promise<void> {
   }
 
   const responseTimeMs = Date.now() - startTime;
-  await d.recordHealthCheck(monitor.id, statusCode, responseTimeMs, isOnline);
+  d.recordHealthCheck(monitor.id, statusCode, responseTimeMs, isOnline);
 
   const newStatus = isOnline ? 'online' : 'offline';
 
@@ -44,11 +40,11 @@ async function checkSingleMonitor(monitor: Monitor, env: Env): Promise<void> {
     }
   }
 
-  await d.updateMonitorStatus(monitor.id, newStatus);
+  d.updateMonitorStatus(monitor.id, newStatus);
 
-  const uptime24h = await d.calculateUptime(monitor.id, 24);
-  const uptime30d = await d.calculateUptime(monitor.id, 720);
-  await d.updateMonitorUptime(monitor.id, uptime24h, uptime30d);
+  const uptime24h = d.calculateUptime(monitor.id, 24);
+  const uptime30d = d.calculateUptime(monitor.id, 720);
+  d.updateMonitorUptime(monitor.id, uptime24h, uptime30d);
 }
 
 async function sendWebhookAlert(

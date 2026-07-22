@@ -1,36 +1,34 @@
 import { Hono, Context, Next } from 'hono';
 import { cors } from 'hono/cors';
-import { db, Monitor } from './db';
-import * as auth from './auth';
-import { generateBadge } from './badge';
-import { runHealthChecks } from './monitor';
-import { views } from './views';
+import { serve } from '@hono/node-server';
+import { db, getDb, migrate as runMigrations } from './db.js';
+import * as auth from './auth.js';
+import { generateBadge } from './badge.js';
+import { runHealthChecks } from './monitor.js';
+import { views } from './views.js';
+import { User } from './db.js';
 
-type Bindings = {
-  DB: D1Database;
-  GITHUB_CLIENT_ID: string;
-  GITHUB_CLIENT_SECRET: string;
-  JWT_SECRET: string;
-  APP_URL: string;
-};
+runMigrations(getDb());
 
-type Variables = {
-  user: import('./db').User;
-};
+const d = db();
+if (!d.getUserByUsername('admin')) {
+  d.upsertUser('admin');
+}
 
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+type Variables = { user: User };
 
+const app = new Hono<{ Variables: Variables }>();
 app.use('*', cors());
 
 function getAppUrl(c: Context): string {
-  return c.env.APP_URL || `${new URL(c.req.url).protocol}//${new URL(c.req.url).host}`;
+  return process.env.APP_URL || `${new URL(c.req.url).protocol}//${new URL(c.req.url).host}`;
 }
 
 async function requireAuth(c: Context, next: Next) {
-  const user = await auth.getSessionUser(c);
+  const user = await auth.authenticateRequest(c);
   if (!user) {
     if (c.req.header('Accept')?.includes('text/html')) {
-      return c.redirect('/auth/github');
+      return c.redirect('/login');
     }
     return c.json({ error: 'Unauthorized' }, 401);
   }
@@ -44,19 +42,21 @@ app.get('/', async (c) => {
   return c.html(views.landing());
 });
 
-app.get('/auth/github', async (c) => {
-  const url = auth.getGitHubAuthUrl(c.env as unknown as auth.AuthEnv);
-  return c.redirect(url);
+app.get('/login', async (c) => {
+  const user = await auth.getSessionUser(c);
+  if (user) return c.redirect('/dashboard');
+  return c.html(views.loginPage());
 });
 
-app.get('/auth/callback', async (c) => {
-  const code = c.req.query('code');
-  if (!code) return c.redirect('/');
-  const user = await auth.handleGitHubCallback(code, c.env as unknown as auth.AuthEnv);
-  if (!user) return c.redirect('/');
-  const token = await auth.createSessionToken(user, c.env as unknown as auth.AuthEnv);
+app.post('/api/login', async (c) => {
+  const body = await c.req.json<{ apiKey: string }>();
+  if (!body.apiKey || !auth.validateApiKey(body.apiKey)) {
+    return c.json({ error: 'Invalid API key' }, 401);
+  }
+  const user = auth.getAdminUser();
+  const token = await auth.createSessionToken(user.id, user.username);
   auth.setSessionCookie(c, token);
-  return c.redirect('/dashboard');
+  return c.json({ ok: true });
 });
 
 app.get('/auth/logout', async (c) => {
@@ -66,8 +66,7 @@ app.get('/auth/logout', async (c) => {
 
 app.get('/dashboard', requireAuth, async (c) => {
   const user = c.var.user;
-  const d = db(c.env.DB);
-  const monitors = await d.getMonitorsByUser(user.id);
+  const monitors = d.getMonitorsByUser(user.id);
   return c.html(views.dashboard(user, monitors, getAppUrl(c)));
 });
 
@@ -79,23 +78,22 @@ app.post('/api/monitors', requireAuth, async (c) => {
   }
   try { new URL(body.url); } catch { return c.json({ error: 'Invalid URL' }, 400); }
 
-  const d = db(c.env.DB);
-  const monitors = await d.getMonitorsByUser(user.id);
+  const monitors = d.getMonitorsByUser(user.id);
   if (monitors.length >= 3) {
     return c.json({ error: 'Free tier limit: 3 monitors. Delete one first.' }, 403);
   }
 
-  const monitor = await d.createMonitor(user.id, body.name.trim(), body.url.trim());
+  const monitor = d.createMonitor(user.id, body.name.trim(), body.url.trim());
   if (body.webhook) {
-    await d.updateMonitorWebhook(monitor.id, user.id, body.webhook.trim());
+    d.updateMonitorWebhook(monitor.id, user.id, body.webhook.trim());
+    monitor.webhook_url = body.webhook.trim();
   }
   return c.json(monitor, 201);
 });
 
 app.get('/api/monitors', requireAuth, async (c) => {
   const user = c.var.user;
-  const d = db(c.env.DB);
-  const monitors = await d.getMonitorsByUser(user.id);
+  const monitors = d.getMonitorsByUser(user.id);
   return c.json(monitors);
 });
 
@@ -103,8 +101,7 @@ app.delete('/api/monitors/:id', requireAuth, async (c) => {
   const user = c.var.user;
   const id = parseInt(c.req.param('id') || '');
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
-  const d = db(c.env.DB);
-  const ok = await d.deleteMonitor(id, user.id);
+  const ok = d.deleteMonitor(id, user.id);
   if (!ok) return c.json({ error: 'Not found' }, 404);
   return c.json({ ok: true });
 });
@@ -114,9 +111,8 @@ app.patch('/api/monitors/:id', requireAuth, async (c) => {
   const id = parseInt(c.req.param('id') || '');
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
   const body = await c.req.json<{ webhook?: string }>();
-  const d = db(c.env.DB);
   if (body.webhook !== undefined) {
-    const m = await d.updateMonitorWebhook(id, user.id, body.webhook);
+    const m = d.updateMonitorWebhook(id, user.id, body.webhook);
     if (!m) return c.json({ error: 'Not found' }, 404);
     return c.json(m);
   }
@@ -127,14 +123,13 @@ app.get('/badge/:id', async (c) => {
   const id = parseInt(c.req.param('id'));
   if (isNaN(id)) return c.body('Not found', 404);
 
-  const d = db(c.env.DB);
-  const monitor = await d.getMonitorById(id);
+  const monitor = d.getMonitorById(id);
   if (!monitor) return c.body('Not found', 404);
 
   const referer = c.req.header('Referer') || null;
-  const ip = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || null;
+  const ip = c.req.header('X-Forwarded-For') || c.req.header('CF-Connecting-IP') || null;
   const ua = c.req.header('User-Agent') || null;
-  await d.recordBadgeImpression(id, referer, ip, ua);
+  d.recordBadgeImpression(id, referer, ip, ua);
 
   const svg = generateBadge({
     label: monitor.name,
@@ -154,12 +149,11 @@ app.get('/status/:id', async (c) => {
   const id = parseInt(c.req.param('id'));
   if (isNaN(id)) return c.html('<h1>Not found</h1>', 404);
 
-  const d = db(c.env.DB);
-  const monitor = await d.getMonitorById(id);
+  const monitor = d.getMonitorById(id);
   if (!monitor) return c.html('<h1>Not found</h1>', 404);
 
-  const owner = await d.getUserById(monitor.user_id);
-  const checks = await d.getRecentHealthChecks(id, 24);
+  const owner = d.getUserById(monitor.user_id);
+  const checks = d.getRecentHealthChecks(id, 24);
 
   return c.html(views.statusPage(
     { ...monitor, username: owner?.username || 'unknown' },
@@ -169,18 +163,21 @@ app.get('/status/:id', async (c) => {
 });
 
 app.get('/gallery', async (c) => {
-  const d = db(c.env.DB);
-  const monitors = await d.getAllMonitorsWithUsers();
-  const withCounts = await Promise.all(monitors.map(async (m) => {
-    const count = await d.getBadgeImpressionCount(m.id);
+  const monitors = d.getAllMonitorsWithUsers();
+  const withCounts = monitors.map((m) => {
+    const count = d.getBadgeImpressionCount(m.id);
     return { ...m, impression_count: count };
-  }));
+  });
   return c.html(views.gallery(withCounts, getAppUrl(c)));
 });
 
-export default {
-  fetch: app.fetch,
-  async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
-    ctx.waitUntil(runHealthChecks(env));
-  },
-};
+const port = parseInt(process.env.PORT || '3000');
+
+serve({ fetch: app.fetch, port });
+
+console.log(`LiveStatus running on port ${port}`);
+console.log(`ADMIN_API_KEY: ${process.env.ADMIN_API_KEY || 'dev-key-change-me'}`);
+
+runHealthChecks().catch(console.error);
+setInterval(() => runHealthChecks().catch(console.error), 5 * 60 * 1000);
+console.log('Health check scheduler started (every 5 minutes)');

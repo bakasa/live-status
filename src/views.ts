@@ -1,4 +1,4 @@
-import { Monitor, User } from './db';
+import { Monitor, User } from './db.js';
 
 const LAYOUT_CSS = `
 *{margin:0;padding:0;box-sizing:border-box}
@@ -91,7 +91,7 @@ function esc(s: string): string {
 }
 
 export const views = {
-  layout(title: string, content: string, user: { username: string; avatar_url: string | null } | null): string {
+  layout(title: string, content: string, user: { username: string; avatar_url?: string | null } | null): string {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,7 +106,7 @@ export const views = {
 <a href="/" style="text-decoration:none"><h1>Live<span>Status</span></h1></a>
 <nav>
 <a href="/gallery">Gallery</a>
-${user ? `<a href="/dashboard">Dashboard</a><a href="/auth/logout">Logout</a><img class="avatar" src="${user.avatar_url || ''}" alt="${user.username}">` : '<a href="/auth/github">Sign in</a>'}
+${user ? `<a href="/dashboard">Dashboard</a><a href="/auth/logout">Logout</a><span style="font-size:13px;font-weight:600;color:#8b949e">${user.username}</span>` : '<a href="/login">Sign in</a>'}
 </nav>
 </div>
 </header>
@@ -261,6 +261,36 @@ function copyText(btn){const input=btn.parentElement.querySelector('input');inpu
 setTimeout(()=>location.reload(),30000);
 </script>`;
     return this.layout(`${monitor.name} Status`, content, null);
+  },
+
+  loginPage(): string {
+    const content = `
+<div class="container" style="padding-top:80px;padding-bottom:80px;max-width:420px">
+<div style="text-align:center;margin-bottom:32px">
+<h1 style="font-size:28px;font-weight:800">Live<span style="color:#36D399">Status</span></h1>
+<p style="color:#8b949e;font-size:14px;margin-top:8px">Sign in with your admin API key</p>
+</div>
+<div class="card">
+<form onsubmit="login(event)">
+<div class="form-group">
+<label for="apiKey">API Key</label>
+<input type="password" id="apiKey" placeholder="Enter your admin API key" required style="font-family:monospace">
+</div>
+<button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Sign In</button>
+</form>
+<div id="error" style="display:none" class="alert alert-error" style="margin-top:16px"></div>
+</div>
+</div>
+<script>
+async function login(e){
+e.preventDefault();
+const key=document.getElementById('apiKey').value;
+const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:key})});
+if(res.ok){window.location.href='/dashboard'}
+else{const el=document.getElementById('error');el.style.display='block';el.textContent='Invalid API key'}
+}
+</script>`;
+    return this.layout('Sign In', content, null);
   },
 
   gallery(monitors: (Monitor & { username: string; impression_count: number })[], appUrl: string): string {

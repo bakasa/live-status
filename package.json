@@ -2,19 +2,23 @@
   "name": "livestatus",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "migrate:local": "wrangler d1 migrations apply livestatus-db --local",
-    "migrate:prod": "wrangler d1 migrations apply livestatus-db --remote"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:dev": "tsx src/index.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^1.12.0",
+    "better-sqlite3": "^11.0.0",
     "hono": "^4.5.0",
     "jose": "^5.2.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240601.0",
-    "typescript": "^5.5.0",
-    "wrangler": "^3.60.0"
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.5.0"
   }
 }
