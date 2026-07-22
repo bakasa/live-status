@@ -4,7 +4,7 @@ import { serve } from '@hono/node-server';
 import { db, getDb, migrate as runMigrations } from './db.js';
 import * as auth from './auth.js';
 import { generateBadge } from './badge.js';
-import { runHealthChecks } from './monitor.js';
+import { runHealthChecks, sendWebhookAlert } from './monitor.js';
 import { views } from './views.js';
 import { User } from './db.js';
 
@@ -160,6 +160,22 @@ app.patch('/api/monitors/:id', requireAuth, async (c) => {
     return c.json(m);
   }
   return c.json({ error: 'Nothing to update' }, 400);
+});
+
+app.post('/api/monitors/:id/test-webhook', requireAuth, async (c) => {
+  const user = c.var.user;
+  const id = parseInt(c.req.param('id') || '');
+  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const monitor = d.getMonitorByIdAndUser(id, user.id);
+  if (!monitor) return c.json({ error: 'Not found' }, 404);
+  if (!monitor.webhook_url) return c.json({ error: 'No webhook configured' }, 400);
+
+  try {
+    await sendWebhookAlert(monitor, 1, 200, 42, monitor.webhook_url);
+    return c.json({ ok: true, message: 'Test webhook sent' });
+  } catch {
+    return c.json({ error: 'Failed to send webhook' }, 502);
+  }
 });
 
 app.get('/badge/:id', async (c) => {

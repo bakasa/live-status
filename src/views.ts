@@ -151,6 +151,7 @@ Get Started — Sign In
 <div class="feature"><div class="icon">🖼️</div><h3>Live Badges</h3><p>Add a dynamic SVG badge to any README or website. Updates every 5 minutes. Shows uptime at a glance.</p></div>
 <div class="feature"><div class="icon">🔔</div><h3>Instant Alerts</h3><p>Get notified via Slack or Discord when your service goes down. Never miss an outage.</p></div>
 <div class="feature"><div class="icon">📊</div><h3>Status Pages</h3><p>Every monitor gets a public status page with 30-day uptime history. Share it with your users.</p></div>
+<div class="feature"><div class="icon">🐙</div><h3>GitHub Ready</h3><p>Add live badges to any README. GitHub Actions integration included.</p></div>
 </div>`;
     return this.layout('Uptime Monitoring with README Badges', content, null);
   },
@@ -172,6 +173,7 @@ Get Started — Sign In
 </div>
 <div class="monitor-actions">
 ${m.webhook_url ? '<span style="color:#8b949e;font-size:12px" title="Webhook configured">🔔</span>' : ''}
+${m.webhook_url ? `<button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="testWebhook(${m.id},this)">Test</button>` : ''}
 <a href="/status/${m.id}" class="btn btn-ghost" style="font-size:12px;padding:6px 12px">Status</a>
 <a href="/badge/${m.id}" class="btn btn-ghost" style="font-size:12px;padding:6px 12px">Badge</a>
 <button class="btn btn-danger" style="font-size:12px;padding:6px 12px" onclick="deleteMonitor(${m.id})">Delete</button>
@@ -214,6 +216,14 @@ if(!confirm('Delete this monitor? This cannot be undone.'))return;
 const res=await fetch('/api/monitors/'+id,{method:'DELETE'});
 if(res.ok){location.reload()}
 else{showAlert('Failed to delete','error')}
+}
+async function testWebhook(id,btn){
+btn.disabled=true;btn.textContent='Sending...'
+const res=await fetch('/api/monitors/'+id+'/test-webhook',{method:'POST'});
+const d=await res.json();
+if(res.ok){showAlert('Test webhook sent! Check your Slack/Discord.','success')}
+else{showAlert(d.error||'Failed','error')}
+btn.disabled=false;btn.textContent='Test'
 }
 function copyText(btn){
 const input=btn.parentElement.querySelector('input');

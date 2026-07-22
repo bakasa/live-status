@@ -47,7 +47,7 @@ async function checkSingleMonitor(monitor: Monitor): Promise<void> {
   d.updateMonitorUptime(monitor.id, uptime24h, uptime30d);
 }
 
-async function sendWebhookAlert(
+export async function sendWebhookAlert(
   monitor: Monitor, isOnline: number,
   statusCode: number | null, responseTimeMs: number,
   webhookUrl: string

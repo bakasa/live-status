@@ -72,6 +72,44 @@ This renders as: ![Example Badge](https://livestatus-production.up.railway.app/b
 
 Each monitor has a public status page at `/status/:id`. Share it with your users.
 
+## GitHub Integration
+
+### Add Badges to Your Repository README
+
+Each monitor generates a badge embed code. Paste it in your `README.md`:
+
+```markdown
+[![LiveStatus](https://your-instance.up.railway.app/badge/1)](https://your-instance.up.railway.app/status/1)
+```
+
+This renders a live SVG badge showing your service status and 24h uptime.
+
+### GitHub Actions: Auto-Register on Deploy
+
+Want to automatically create/update a monitor when you deploy? Add this workflow (`.github/workflows/livestatus.yml`):
+
+```yaml
+name: Register LiveStatus Monitor
+on:
+  deployment_status:
+jobs:
+  register:
+    if: github.event_name == 'deployment_status' && github.event.deployment_state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -X POST https://your-instance.up.railway.app/api/monitors \
+            -H "Authorization: Bearer ${{ secrets.LIVESTATUS_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"${{ github.event.repository.full_name }}","url":"${{ github.event.deployment.payload.web_url || github.event.deployment.environment_url }}"}'
+```
+
+Set `LIVESTATUS_KEY` as a repository secret with your admin API key.
+
+### GitHub Deployment Status Checks
+
+Use the public status page URL in your GitHub repo's **Website** field (repo → About → Website) so visitors can see your uptime at a glance.
+
 ## API
 
 All API endpoints require authentication via Bearer token or session cookie.
@@ -83,6 +121,7 @@ All API endpoints require authentication via Bearer token or session cookie.
 | `POST` | `/api/monitors` | Create monitor (`name`, `url`, `webhook?`) |
 | `DELETE` | `/api/monitors/:id` | Delete monitor |
 | `PATCH` | `/api/monitors/:id` | Update monitor webhook |
+| `POST` | `/api/monitors/:id/test-webhook` | Send test webhook notification |
 | `POST` | `/api/reseed` | Reset demo monitors |
 | `GET` | `/badge/:id` | SVG badge (public) |
 | `GET` | `/status/:id` | Status page (public) |
