@@ -121,6 +121,12 @@ LiveStatus — Open source uptime monitoring · <a href="/gallery">Gallery</a> �
   },
 
   landing(): string {
+    const dogfoodBadges = [
+      { id: 4, name: 'Auto-Company Site' },
+      { id: 5, name: 'ReqDump' },
+      { id: 6, name: 'SnapOG' },
+    ].map(b => `<a href="/status/${b.id}" style="display:inline-block;margin:4px"><img src="/badge/${b.id}" alt="${b.name}" style="height:24px"></a>`).join('\n');
+
     const content = `
 <div class="hero">
 <div class="badge-example">
@@ -131,6 +137,9 @@ LiveStatus — Open source uptime monitoring · <a href="/gallery">Gallery</a> �
 <text x="22" y="15" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif" font-size="13" font-weight="600">My API Service</text>
 <text x="200" y="15" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif" font-size="13" font-weight="700" text-anchor="end">100.0% ONLINE</text>
 </svg>
+</div>
+<div style="margin-bottom:32px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+${dogfoodBadges}
 </div>
 <h1>Uptime monitoring<br>for your <span>README</span></h1>
 <p>Add a live status badge to your GitHub README. Monitor your APIs, services, and websites. Get alerted when things go down.</p>
